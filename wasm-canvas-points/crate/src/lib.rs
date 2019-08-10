@@ -1,5 +1,7 @@
 #[macro_use]
 extern crate cfg_if;
+#[macro_use]
+extern crate log;
 use piet::kurbo::{BezPath, Point};
 use piet::{Color, RenderContext};
 use piet_test::draw_test_picture;
@@ -61,6 +63,7 @@ pub fn run() -> Result<(), JsValue> {
     // If the `console_error_panic_hook` feature is enabled this will set a panic hook, otherwise
     // it will do nothing.
     set_panic_hook();
+    wasm_logger::init(wasm_logger::Config::new(log::Level::Debug));
 
     let window = web_sys::window().expect("no global `window` exists");
     // let document = window.document().expect("should have a document on window");
@@ -80,13 +83,12 @@ pub fn run() -> Result<(), JsValue> {
         .dyn_into::<web_sys::CanvasRenderingContext2d>()
         .unwrap();
 
-    // let dpr = window.device_pixel_ratio();
-    // canvas.set_width((canvas.offset_width() as f64 * dpr) as u32);
-    // canvas.set_height((canvas.offset_height() as f64 * dpr) as u32);
-    canvas.set_width(3000);
-    canvas.set_height(3000);
-    let dpr = 20.;
-    let _ = context.scale(dpr, dpr);
+    let dpr = window.device_pixel_ratio();
+    debug!("device_pixel_ratio: {}", dpr);
+    canvas.set_width((canvas.offset_width() as f64 * dpr) as u32);
+    canvas.set_height((canvas.offset_height() as f64 * dpr) as u32);
+    debug!("canvas width/height: {}/{}", canvas.offset_width(), canvas.offset_height());
+    let _ = context.scale(dpr*10., dpr*10.);
 
     let mut piet_context = WebRenderContext::new(&mut context, &window);
     draw_test_picture(&mut piet_context, 2).unwrap();

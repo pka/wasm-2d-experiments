@@ -18,6 +18,8 @@ wasm-bindgen = "0.2.29"
 piet = "0.0.6"
 piet-web = "0.0.6"
 piet-test = "0.0.6"
+log = "0.4.6"
+wasm-logger = "0.1.5"
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires

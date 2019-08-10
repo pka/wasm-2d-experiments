@@ -33,54 +33,74 @@ cfg_if! {
     }
 }
 
-// Called by our JS entry point to run the example
 #[wasm_bindgen]
-pub fn run() -> Result<(), JsValue> {
-    // If the `console_error_panic_hook` feature is enabled this will set a panic hook, otherwise
-    // it will do nothing.
-    set_panic_hook();
-    wasm_logger::init(wasm_logger::Config::new(log::Level::Debug));
+pub struct RenderEnv {
+    w: f64,
+    h: f64,
+    context: web_sys::CanvasRenderingContext2d,
+    window: web_sys::Window,
+}
 
-    let window = web_sys::window().expect("no global `window` exists");
-    // let document = window.document().expect("should have a document on window");
-    // let body = document.body().expect("document should have a body");
+/// Public methods, exported to JavaScript.
+#[wasm_bindgen]
+impl RenderEnv {
+    pub fn new() -> Self {
+        // If the `console_error_panic_hook` feature is enabled this will set a panic hook, otherwise
+        // it will do nothing.
+        set_panic_hook();
+        wasm_logger::init(wasm_logger::Config::new(log::Level::Debug));
 
-    let canvas = window
-        .document()
-        .unwrap()
-        .get_element_by_id("canvas")
-        .unwrap()
-        .dyn_into::<HtmlCanvasElement>()
-        .unwrap();
-    let mut context = canvas
-        .get_context("2d")
-        .unwrap()
-        .unwrap()
-        .dyn_into::<web_sys::CanvasRenderingContext2d>()
-        .unwrap();
+        let window = web_sys::window().expect("no global `window` exists");
+        // let document = window.document().expect("should have a document on window");
+        // let body = document.body().expect("document should have a body");
 
-    let w = canvas.offset_width() as f64;
-    let h = canvas.offset_height() as f64;
-    let dpr = window.device_pixel_ratio();
-    debug!("device_pixel_ratio: {}", dpr);
-    canvas.set_width((w * dpr) as u32);
-    canvas.set_height((h * dpr) as u32);
-    debug!("canvas width/height: {}x{}", w, h);
-    let _ = context.scale(dpr, dpr);
+        let canvas = window
+            .document()
+            .unwrap()
+            .get_element_by_id("canvas")
+            .unwrap()
+            .dyn_into::<HtmlCanvasElement>()
+            .unwrap();
+        let context = canvas
+            .get_context("2d")
+            .unwrap()
+            .unwrap()
+            .dyn_into::<web_sys::CanvasRenderingContext2d>()
+            .unwrap();
 
-    let mut piet_context = WebRenderContext::new(&mut context, &window);
-    for _ in 0..1000 {
-        let brush = piet_context.solid_brush(Color::rgba(
-            OsRng.gen::<f64>(),
-            OsRng.gen::<f64>(),
-            OsRng.gen::<f64>(),
-            OsRng.gen::<f64>(),
-        ));
-        let pt = (OsRng.gen::<f64>() * w, OsRng.gen::<f64>() * h);
-        let dot = Circle::new(pt, OsRng.gen::<f64>() * 50.);
-        piet_context.fill(&dot, &brush);
+        let w = canvas.offset_width() as f64;
+        let h = canvas.offset_height() as f64;
+        let dpr = window.device_pixel_ratio();
+        debug!("device_pixel_ratio: {}", dpr);
+        canvas.set_width((w * dpr) as u32);
+        canvas.set_height((h * dpr) as u32);
+        debug!("canvas width/height: {}x{}", w, h);
+        let _ = context.scale(dpr, dpr);
+
+        RenderEnv {
+            w,
+            h,
+            context,
+            window,
+        }
     }
-    piet_context.finish().unwrap();
 
-    Ok(())
+    pub fn render(&mut self) {
+        let mut piet_context = WebRenderContext::new(&mut self.context, &self.window);
+        piet_context.clear(Color::WHITE);
+        for _ in 0..2000 {
+            let brush = piet_context.solid_brush(Color::rgba(
+                OsRng.gen::<f64>(),
+                OsRng.gen::<f64>(),
+                OsRng.gen::<f64>(),
+                OsRng.gen::<f64>(),
+            ));
+            let pt = (OsRng.gen::<f64>() * self.w, OsRng.gen::<f64>() * self.h);
+            let radius = OsRng.gen::<f64>() * 25.;
+            let shape = Circle::new(pt, radius);
+            // let shape = Rect::new(pt.0-radius, pt.1-radius, pt.0+radius, pt.1+radius);
+            piet_context.fill(&shape, &brush);
+        }
+        piet_context.finish().unwrap();
+    }
 }

@@ -4,8 +4,9 @@ extern crate cfg_if;
 extern crate log;
 use piet::kurbo::Circle;
 use piet::{Color, RenderContext};
-use piet_test::draw_test_picture;
 use piet_web::WebRenderContext;
+use rand::rngs::OsRng;
+use rand::Rng;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::HtmlCanvasElement;
@@ -58,23 +59,26 @@ pub fn run() -> Result<(), JsValue> {
         .dyn_into::<web_sys::CanvasRenderingContext2d>()
         .unwrap();
 
+    let w = canvas.offset_width() as f64;
+    let h = canvas.offset_height() as f64;
     let dpr = window.device_pixel_ratio();
     debug!("device_pixel_ratio: {}", dpr);
-    canvas.set_width((canvas.offset_width() as f64 * dpr) as u32);
-    canvas.set_height((canvas.offset_height() as f64 * dpr) as u32);
-    debug!(
-        "canvas width/height: {}/{}",
-        canvas.offset_width(),
-        canvas.offset_height()
-    );
-    let _ = context.scale(dpr * 10., dpr * 10.);
+    canvas.set_width((w * dpr) as u32);
+    canvas.set_height((h * dpr) as u32);
+    debug!("canvas width/height: {}x{}", w, h);
+    let _ = context.scale(dpr, dpr);
 
     let mut piet_context = WebRenderContext::new(&mut context, &window);
-    draw_test_picture(&mut piet_context, 2).unwrap();
-    let handle_brush = piet_context.solid_brush(Color::rgb8(0x00, 0x00, 0x80));
-    for pt in vec![(70.0, 80.0), (140.0, 10.0), (60.0, 10.0), (90.0, 80.0)] {
-        let dot = Circle::new(pt, 1.5);
-        piet_context.fill(&dot, &handle_brush);
+    for _ in 0..1000 {
+        let brush = piet_context.solid_brush(Color::rgba(
+            OsRng.gen::<f64>(),
+            OsRng.gen::<f64>(),
+            OsRng.gen::<f64>(),
+            OsRng.gen::<f64>(),
+        ));
+        let pt = (OsRng.gen::<f64>() * w, OsRng.gen::<f64>() * h);
+        let dot = Circle::new(pt, OsRng.gen::<f64>() * 50.);
+        piet_context.fill(&dot, &brush);
     }
     piet_context.finish().unwrap();
 

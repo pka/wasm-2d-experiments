@@ -1,12 +1,13 @@
 [package]
-authors = ["The RustWasm Developers"]
+authors = ["Pirmin Kalberer <pka@sourcepole.ch>"]
 categories = ["wasm"]
-description = "My super awesome Rust, WebAssembly, and Parcel project!"
+description = "Drawing circles into web canvas"
 license = "Apache-2.0/MIT"
-name = "rust-parcel"
+name = "wasm-canvas-points"
 readme = "./README.md"
-repository = "https://github.com/rustwasm/rust-parcel-template"
+repository = "https://github.com/pka/wasm-2d-experiments"
 version = "0.1.0"
+edition = "2018"
 
 [lib]
 crate-type = ["cdylib"]
@@ -14,6 +15,9 @@ crate-type = ["cdylib"]
 [dependencies]
 cfg-if = "0.1.5"
 wasm-bindgen = "0.2.29"
+piet = "0.0.6"
+piet-web = "0.0.6"
+piet-test = "0.0.6"
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
@@ -28,14 +32,8 @@ console_error_panic_hook = { version = "0.1.5", optional = true }
 wee_alloc = { version = "0.4.2", optional = true }
 
 [dependencies.web-sys]
-version = "0.3.6"
-features = [
-  'Document',
-  'Element',
-  'HtmlElement',
-  'Node',
-  'Window',
-]
+version = "0.3.10"
+features = ["CanvasRenderingContext2d", "Window", "Document", "Element", "HtmlElement", "HtmlCanvasElement"]
 
 [features]
 default = ["console_error_panic_hook"]

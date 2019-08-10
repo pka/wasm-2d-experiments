@@ -2,7 +2,7 @@
 extern crate cfg_if;
 #[macro_use]
 extern crate log;
-use piet::kurbo::{BezPath, Point};
+use piet::kurbo::Circle;
 use piet::{Color, RenderContext};
 use piet_test::draw_test_picture;
 use piet_web::WebRenderContext;
@@ -30,31 +30,6 @@ cfg_if! {
         #[global_allocator]
         static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
     }
-}
-
-fn circle<V: Into<Point>>(center: V, radius: f64, num_segments: usize) -> BezPath {
-    let mut path = BezPath::new();
-    if num_segments == 0 {
-        return path;
-    }
-
-    let center = center.into();
-    let centerx = center.x;
-    let centery = center.y;
-    for segment in 0..num_segments {
-        let theta = 2.0 * std::f64::consts::PI * (segment as f64) / (num_segments as f64);
-        let x = radius * theta.cos();
-        let y = radius * theta.sin();
-        if segment == 0 {
-            path.move_to((x + centerx, y + centery));
-        } else {
-            let end = (x + centerx, y + centery);
-            path.line_to(end);
-        }
-    }
-
-    path.close_path();
-    return path;
 }
 
 // Called by our JS entry point to run the example
@@ -87,14 +62,18 @@ pub fn run() -> Result<(), JsValue> {
     debug!("device_pixel_ratio: {}", dpr);
     canvas.set_width((canvas.offset_width() as f64 * dpr) as u32);
     canvas.set_height((canvas.offset_height() as f64 * dpr) as u32);
-    debug!("canvas width/height: {}/{}", canvas.offset_width(), canvas.offset_height());
-    let _ = context.scale(dpr*10., dpr*10.);
+    debug!(
+        "canvas width/height: {}/{}",
+        canvas.offset_width(),
+        canvas.offset_height()
+    );
+    let _ = context.scale(dpr * 10., dpr * 10.);
 
     let mut piet_context = WebRenderContext::new(&mut context, &window);
     draw_test_picture(&mut piet_context, 2).unwrap();
     let handle_brush = piet_context.solid_brush(Color::rgb8(0x00, 0x00, 0x80));
     for pt in vec![(70.0, 80.0), (140.0, 10.0), (60.0, 10.0), (90.0, 80.0)] {
-        let dot = circle(pt, 1.5, 20);
+        let dot = Circle::new(pt, 1.5);
         piet_context.fill(&dot, &handle_brush);
     }
     piet_context.finish().unwrap();

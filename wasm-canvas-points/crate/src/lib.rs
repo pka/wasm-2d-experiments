@@ -2,7 +2,7 @@
 extern crate cfg_if;
 #[macro_use]
 extern crate log;
-use piet::kurbo::Circle;
+use piet::kurbo::{Circle, Rect};
 use piet::{Color, RenderContext};
 use piet_web::WebRenderContext;
 use rand::rngs::OsRng;
@@ -87,7 +87,10 @@ impl RenderEnv {
 
     pub fn render(&mut self) {
         let mut piet_context = WebRenderContext::new(&mut self.context, &self.window);
-        piet_context.clear(Color::WHITE);
+        // piet_context.clear(Color::WHITE); // Not implemented yet
+        let canvas_rect = Rect::new(0., 0., self.w, self.h);
+        let brush = piet_context.solid_brush(Color::WHITE);
+        piet_context.fill(&canvas_rect, &brush);
         for _ in 0..2000 {
             let brush = piet_context.solid_brush(Color::rgba(
                 OsRng.gen::<f64>(),

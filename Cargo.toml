@@ -1,5 +1,6 @@
 [workspace]
 
 members = [
-    "wasm-canvas-points/crate"
+    "wasm-canvas-points/crate",
+    "quicksilver-points"
 ]

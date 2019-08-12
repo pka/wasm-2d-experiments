@@ -11,3 +11,4 @@ edition = "2018"
 
 [dependencies]
 quicksilver = { version = "0.3.16", default-features = false, features = [ "lyon" ] }
+rand = "0.6"

@@ -1,16 +1,24 @@
 use quicksilver::{
-    geom::{Transform, Vector},
+    geom::Vector,
     graphics::{Color, Mesh, ShapeRenderer},
     lifecycle::{run, Settings, State, Window},
     lyon::{
-        extra::rust_logo::build_logo_path,
-        path::{builder::*, Path},
-        tessellation::{FillOptions, FillTessellator},
+        math::{point, rect},
+        tessellation::basic_shapes::*,
+        tessellation::FillOptions,
     },
     Result,
 };
+use rand;
 
 struct Circles;
+
+const W: f32 = 1000.0;
+const H: f32 = 500.0;
+
+fn rnd() -> f32 {
+    rand::random::<f32>()
+}
 
 impl State for Circles {
     fn new() -> Result<Circles> {
@@ -18,24 +26,43 @@ impl State for Circles {
     }
 
     fn draw(&mut self, window: &mut Window) -> Result<()> {
-        // Build a Path for the rust logo.
-        let mut builder = SvgPathBuilder::new(Path::builder());
-        build_logo_path(&mut builder);
-        let path = builder.build();
+        let mut mesh = Mesh::new();
+        let mut mesh_shape = ShapeRenderer::new(&mut mesh, Color::BLACK);
 
-        let filled_logo = {
-            let mut logo = Mesh::new();
-            let mut logo_shape = ShapeRenderer::new(&mut logo, Color::BLACK);
-            logo_shape.set_transform(Transform::scale((3, 3)));
-            let mut tessellator = FillTessellator::new();
-            tessellator
-                .tessellate_path(&path, &FillOptions::tolerance(0.01), &mut logo_shape)
-                .unwrap();
-            logo
-        };
+        let options = FillOptions::tolerance(0.1);
+        for _i in 0..400 {
+            mesh_shape.set_color(Color {
+                r: rnd(),
+                g: rnd(),
+                b: rnd(),
+                a: rnd(),
+            });
+            let center = point(rnd() * W, rnd() * H);
+            fill_circle(
+                center,
+                rnd() * 25.,
+                &options,
+                &mut mesh_shape,
+            )
+            .unwrap();
+        }
+
+        mesh_shape.set_color(Color::RED.with_alpha(0.8));
+        fill_rounded_rectangle(
+            &rect(880.0, 430.0, 100.0, 50.0),
+            &BorderRadii {
+                top_left: 10.0,
+                top_right: 10.0,
+                bottom_left: 10.0,
+                bottom_right: 10.0,
+            },
+            &options,
+            &mut mesh_shape,
+        )
+        .unwrap();
 
         window.clear(Color::WHITE)?;
-        window.mesh().extend(&filled_logo);
+        window.mesh().extend(&mesh);
 
         Ok(())
     }
@@ -44,7 +71,7 @@ impl State for Circles {
 fn main() {
     run::<Circles>(
         "quicksilver-points",
-        Vector::new(800, 600),
+        Vector::new(1000, 500),
         Settings {
             multisampling: Some(4),
             ..Settings::default()

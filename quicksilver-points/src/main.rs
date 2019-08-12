@@ -1,3 +1,4 @@
+use quicksilver::prelude::*;
 use quicksilver::{
     geom::Vector,
     graphics::{Color, Mesh, ShapeRenderer},
@@ -11,7 +12,9 @@ use quicksilver::{
 };
 use rand;
 
-struct Circles;
+struct Circles {
+    font: Asset<Font>,
+}
 
 const W: f32 = 1000.0;
 const H: f32 = 500.0;
@@ -22,7 +25,8 @@ fn rnd() -> f32 {
 
 impl State for Circles {
     fn new() -> Result<Circles> {
-        Ok(Circles)
+        let font = Asset::new(Font::load("mononoki-Regular.ttf"));
+        Ok(Circles { font })
     }
 
     fn draw(&mut self, window: &mut Window) -> Result<()> {
@@ -38,13 +42,7 @@ impl State for Circles {
                 a: rnd(),
             });
             let center = point(rnd() * W, rnd() * H);
-            fill_circle(
-                center,
-                rnd() * 25.,
-                &options,
-                &mut mesh_shape,
-            )
-            .unwrap();
+            fill_circle(center, rnd() * 25., &options, &mut mesh_shape).unwrap();
         }
 
         mesh_shape.set_color(Color::RED.with_alpha(0.8));
@@ -63,6 +61,15 @@ impl State for Circles {
 
         window.clear(Color::WHITE)?;
         window.mesh().extend(&mesh);
+
+        self.font.execute(|font| {
+            let fps = format!("{:.1}", window.average_fps());
+            let image = font
+                .render(&fps, &FontStyle::new(32.0, Color::BLACK))
+                .unwrap();
+            window.draw(&image.area().with_center((930, 460)), Img(&image));
+            Ok(())
+        })?;
 
         Ok(())
     }

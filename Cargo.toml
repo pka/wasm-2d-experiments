@@ -2,5 +2,6 @@
 
 members = [
     "wasm-canvas-points/crate",
-    "quicksilver-points"
+    "quicksilver-points",
+    "raqote-points"
 ]

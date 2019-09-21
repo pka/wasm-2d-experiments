@@ -33,8 +33,8 @@ cfg_if! {
 
 #[wasm_bindgen]
 pub struct RenderEnv {
-    w: f64,
-    h: f64,
+    w: f32,
+    h: f32,
     context: web_sys::CanvasRenderingContext2d,
 }
 
@@ -74,67 +74,33 @@ impl RenderEnv {
         debug!("canvas width/height: {}x{}", w, h);
         let _ = context.scale(dpr, dpr);
 
-        RenderEnv { w, h, context }
+        RenderEnv {
+            w: w as f32,
+            h: h as f32,
+            context,
+        }
     }
 
     pub fn render(&mut self) {
         let mut dt = DrawTarget::new(self.w as i32, self.h as i32);
 
-        let mut pb = PathBuilder::new();
-        pb.move_to(100., 10.);
-        pb.cubic_to(150., 40., 175., 0., 200., 10.);
-        pb.quad_to(120., 100., 80., 200.);
-        pb.quad_to(150., 180., 300., 300.);
-        pb.close();
-        let path = pb.finish();
-
-        let gradient = Source::new_radial_gradient(
-            Gradient {
-                stops: vec![
-                    GradientStop {
-                        position: 0.2,
-                        color: Color::new(0xff, 0, 0xff, 0),
-                    },
-                    GradientStop {
-                        position: 0.8,
-                        color: Color::new(0xff, 0xff, 0xff, 0xff),
-                    },
-                    GradientStop {
-                        position: 1.,
-                        color: Color::new(0xff, 0xff, 0, 0xff),
-                    },
-                ],
-            },
-            Point::new(150., 150.),
-            128.,
-            Spread::Pad,
-        );
-        dt.fill(&path, &gradient, &DrawOptions::new());
-
-        let mut pb = PathBuilder::new();
-        pb.move_to(100., 100.);
-        pb.line_to(300., 300.);
-        pb.line_to(200., 300.);
-        let path = pb.finish();
-
-        dt.stroke(
-            &path,
-            &Source::Solid(SolidSource {
-                r: 0x0,
-                g: 0x0,
-                b: 0x80,
-                a: 0x80,
-            }),
-            &StrokeStyle {
-                cap: LineCap::Round,
-                join: LineJoin::Round,
-                width: 10.,
-                miter_limit: 2.,
-                dash_array: vec![10., 18.],
-                dash_offset: 16.,
-            },
-            &DrawOptions::new(),
-        );
+        for _ in 0..2000 {
+            let color = SolidSource {
+                r: OsRng.gen::<u8>(),
+                g: OsRng.gen::<u8>(),
+                b: OsRng.gen::<u8>(),
+                a: OsRng.gen::<u8>(),
+            };
+            let x = OsRng.gen::<f32>() * self.w;
+            let y = OsRng.gen::<f32>() * self.h;
+            let radius = OsRng.gen::<f32>() * 25.;
+            let mut pb = PathBuilder::new();
+            pb.move_to(x, y);
+            pb.arc(x - radius, y, radius, 0., 2. * 3.14159);
+            pb.close();
+            let path = pb.finish();
+            dt.fill(&path, &Source::Solid(color), &DrawOptions::new());
+        }
 
         let mut pixel_data = dt.get_data_u8_mut();
 

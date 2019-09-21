@@ -6,8 +6,8 @@ use rand::rngs::OsRng;
 use rand::Rng;
 use raqote::*;
 use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
-use web_sys::HtmlCanvasElement;
+use wasm_bindgen::{Clamped, JsCast};
+use web_sys::{HtmlCanvasElement, ImageData};
 
 cfg_if! {
     // When the `console_error_panic_hook` feature is enabled, we can call the
@@ -36,7 +36,6 @@ pub struct RenderEnv {
     w: f64,
     h: f64,
     context: web_sys::CanvasRenderingContext2d,
-    window: web_sys::Window,
 }
 
 /// Public methods, exported to JavaScript.
@@ -75,16 +74,11 @@ impl RenderEnv {
         debug!("canvas width/height: {}x{}", w, h);
         let _ = context.scale(dpr, dpr);
 
-        RenderEnv {
-            w,
-            h,
-            context,
-            window,
-        }
+        RenderEnv { w, h, context }
     }
 
     pub fn render(&mut self) {
-        let mut dt = DrawTarget::new(400, 400);
+        let mut dt = DrawTarget::new(self.w as i32, self.h as i32);
 
         let mut pb = PathBuilder::new();
         pb.move_to(100., 10.);
@@ -142,6 +136,16 @@ impl RenderEnv {
             &DrawOptions::new(),
         );
 
-        let _ = dt.write_png("example.png");
+        let mut pixel_data = dt.get_data_u8_mut();
+
+        // Convert raw pixel_data to ImageData object
+        let image_data = ImageData::new_with_u8_clamped_array_and_sh(
+            Clamped(&mut pixel_data),
+            self.w as u32,
+            self.h as u32,
+        );
+
+        // Place image_data onto canvas
+        let _ = self.context.put_image_data(&image_data.unwrap(), 0.0, 0.0);
     }
 }
